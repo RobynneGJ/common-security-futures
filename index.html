@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Choose Your Own Path — Common Security Futures</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #FAFAF8;
+    --surface: #FFFFFF;
+    --surface-secondary: #F4F3EF;
+    --border: rgba(0,0,0,0.12);
+    --border-strong: rgba(0,0,0,0.22);
+    --text: #1A1A18;
+    --text-secondary: #5A5A56;
+    --text-tertiary: #8A8A85;
+    --teal-bg: #E1F5EE;
+    --teal-text: #0F6E56;
+    --purple-bg: #EEEDFE;
+    --purple-text: #534AB7;
+    --radius-md: 8px;
+    --radius-lg: 14px;
+    --font: 'Georgia', 'Times New Roman', serif;
+    --font-ui: system-ui, -apple-system, sans-serif;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #141412;
+      --surface: #1E1E1B;
+      --surface-secondary: #272724;
+      --border: rgba(255,255,255,0.1);
+      --border-strong: rgba(255,255,255,0.2);
+      --text: #EEEEE8;
+      --text-secondary: #AAAAAA;
+      --text-tertiary: #707070;
+      --teal-bg: #085041;
+      --teal-text: #9FE1CB;
+      --purple-bg: #26215C;
+      --purple-text: #CECBF6;
+    }
+  }
+
+  html { background: var(--bg); color: var(--text); font-family: var(--font); }
+
+  body { min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 2rem 1rem 4rem; }
+
+  .site-header { width: 100%; max-width: 640px; margin-bottom: 2.5rem; padding-bottom: 1.5rem; border-bottom: 0.5px solid var(--border); }
+
+  .eyebrow { font-family: var(--font-ui); font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-tertiary); margin-bottom: 0.5rem; }
+
+  .site-title { font-size: 26px; font-weight: normal; line-height: 1.25; color: var(--text); margin-bottom: 0.35rem; }
+
+  .site-sub { font-family: var(--font-ui); font-size: 14px; color: var(--text-secondary); line-height: 1.5; }
+
+  .wrap { width: 100%; max-width: 640px; }
+
+  .card { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 1.75rem 2rem; }
+
+  .start-title { font-size: 20px; font-weight: normal; margin-bottom: 0.5rem; }
+  .start-sub { font-family: var(--font-ui); font-size: 14px; color: var(--text-secondary); margin-bottom: 1.5rem; line-height: 1.6; }
+
+  .stream-tag { display: inline-block; font-family: var(--font-ui); font-size: 11px; letter-spacing: 0.07em; text-transform: uppercase; padding: 3px 9px; border-radius: 4px; margin-bottom: 1rem; }
+  .stream-practice { background: var(--teal-bg); color: var(--teal-text); }
+  .stream-infra { background: var(--purple-bg); color: var(--purple-text); }
+
+  .photo-label { font-family: var(--font-ui); font-size: 12px; color: var(--text-tertiary); display: inline-block; border: 0.5px solid var(--border); border-radius: 5px; padding: 3px 9px; margin-bottom: 1.25rem; }
+
+  .card-body { font-size: 16px; line-height: 1.8; color: var(--text); }
+  .card-body p + p { margin-top: 0.9rem; }
+  .card-body em { font-style: italic; color: var(--text-secondary); }
+
+  .question { font-family: var(--font-ui); font-size: 14px; color: var(--text-secondary); margin-top: 1.25rem; margin-bottom: 0.75rem; }
+
+  .choices { display: flex; flex-direction: column; gap: 8px; margin-top: 1.25rem; }
+
+  .choice-btn {
+    background: var(--surface-secondary);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 0.85rem 1rem;
+    font-size: 15px;
+    font-family: var(--font);
+    color: var(--text);
+    cursor: pointer;
+    text-align: left;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    transition: border-color 0.15s, background 0.15s;
+    line-height: 1.4;
+  }
+  .choice-btn:hover { border-color: var(--border-strong); background: var(--surface); }
+  .choice-btn .dest-tag { font-family: var(--font-ui); font-size: 12px; color: var(--text-tertiary); white-space: nowrap; flex-shrink: 0; }
+
+  .progress-bar { height: 2px; background: var(--border); border-radius: 2px; margin-bottom: 1.25rem; overflow: hidden; }
+  .progress-fill { height: 100%; background: var(--text-tertiary); border-radius: 2px; transition: width 0.35s ease; }
+
+  .breadcrumb { display: flex; align-items: center; gap: 5px; margin-bottom: 1rem; flex-wrap: wrap; }
+  .crumb { font-family: var(--font-ui); font-size: 12px; color: var(--text-tertiary); cursor: pointer; }
+  .crumb:hover { color: var(--text-secondary); text-decoration: underline; }
+  .crumb.current { color: var(--text-secondary); cursor: default; pointer-events: none; }
+  .crumb.current:hover { text-decoration: none; }
+  .crumb-sep { font-family: var(--font-ui); font-size: 12px; color: var(--text-tertiary); }
+
+  .end-note { font-family: var(--font-ui); font-size: 14px; color: var(--text-secondary); line-height: 1.65; padding: 1rem 0 0.75rem; border-top: 0.5px solid var(--border); margin-top: 1.25rem; }
+
+  .restart-btn {
+    font-family: var(--font-ui);
+    font-size: 13px;
+    color: var(--text-secondary);
+    background: transparent;
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 0.5rem 1rem;
+    cursor: pointer;
+    margin-top: 0.75rem;
+    transition: border-color 0.15s;
+  }
+  .restart-btn:hover { border-color: var(--border-strong); }
+
+  .site-footer { width: 100%; max-width: 640px; margin-top: 2.5rem; padding-top: 1.25rem; border-top: 0.5px solid var(--border); font-family: var(--font-ui); font-size: 12px; color: var(--text-tertiary); line-height: 1.6; }
+
+  @media (max-width: 480px) {
+    .card { padding: 1.25rem 1.25rem; }
+    .site-title { font-size: 22px; }
+    .card-body { font-size: 15px; }
+  }
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <p class="eyebrow">Common Security Futures · Gugu S'Thebe, Langa</p>
+  <h1 class="site-title">Choose your own path</h1>
+  <p class="site-sub">An exhibition guide. Follow where your thinking takes you — there is no wrong answer, and you can go back at any point.</p>
+</header>
+
+<main class="wrap">
+  <div id="app"></div>
+</main>
+
+<footer class="site-footer">
+  Research by Robynne Grant-Jepps, University of Bristol, School for Sociology, Politics, and International Studies. Supported by the South West Doctoral Training Partnership.
+</footer>
+
+<script>
+const nodes = {
+  start: {
+    type: 'start',
+    body: 'Which statement do you most agree with?',
+    choices: [
+      { label: 'Security is something people do for each other', dest: 'p10', tag: 'Practice stream →' },
+      { label: 'Security is something people have, or are denied', dest: 'p6', tag: 'Infrastructure stream →' }
+    ]
+  },
+  p10: {
+    photo: 'Photo 10',
+    stream: 'practice',
+    body: ['The caption casts security as procedures: masks, gloves, sanitiser, locked gates, a register of names at the gate. A series of actions that have to be learned, coordinated, and repeated. But these women are also producing <em>knowledge</em> together. The CANs were about getting information to people who needed it during the pandemic, and the skills people built here outlasted the crisis.'],
+    question: 'What do you think this kind of organising ultimately produces?',
+    choices: [
+      { label: 'The practical outputs: the things made, cooked, delivered', dest: 'p11', tag: '→ Photo 11' },
+      { label: 'The community itself: the relationships that make the outputs possible', dest: 'p12', tag: '→ Photo 12' }
+    ]
+  },
+  p6: {
+    photo: 'Photo 6',
+    stream: 'infra',
+    body: ['Look carefully at this image. The electric fencing is almost invisible. It is absorbed into the greenery, the pink flowers and the blue sky. The caption gives it a single label: <em>electric fencing</em>. The violence of the infrastructure has been aestheticised almost entirely out of view.', 'This photograph was taken in a suburb. Notice how peaceful it looks. Ask yourself: peaceful for whom? Is there anyone who would not feel at peace here?'],
+    choices: [
+      { label: 'Continue', dest: 'p9', tag: '→ Photo 9' }
+    ]
+  },
+  p9: {
+    photo: 'Photo 9',
+    stream: 'infra',
+    body: ['This participant has named what this infrastructure does: it gives some residents a <em>perceived</em> sense of safety while making non-residents feel unwanted. Notice that word. They are not saying these residents are safe. They are saying they <em>feel</em> safe and someone else bears the cost of that feeling.', 'Where does that cost come from?'],
+    choices: [
+      { label: 'It has deep roots in this city\'s history and in who the state has chosen to protect', dest: 'p3', tag: '→ Photo 3' },
+      { label: 'It tells us that when the state won\'t protect you, a person must protect their own', dest: 'p1', tag: '→ Photo 1' }
+    ]
+  },
+  p3: {
+    photo: 'Photo 3',
+    stream: 'infra',
+    body: ['The placard in this photograph is written in English and Afrikaans. Notably absent is Xhosa, the language of many of those who were imprisoned here. Security, as a sense of recognition and dignity, includes the right to have your history told in your own words.', 'This participant\'s caption defines security as freedom from a particular kind of fear: the fear of arbitrary state power, of imprisonment without cause or due process. Security here is the promise of a legitimate political order in which the law protects everyone equally, regardless of who they are.'],
+    choices: [
+      { label: 'Now look at what people organise when that promise has not yet been fulfilled', dest: 'p16', tag: '→ Photo 16' }
+    ]
+  },
+  p1: {
+    photo: 'Photo 1',
+    stream: 'infra',
+    body: ['This participant has chosen to be photographed in traditional dress, carrying a bow, with white ceremonial paint on his face and hands. Behind him is a door covered with iron bars. Two ideas of security share the same frame: the protective infrastructure of the locked door, and the safeguarding of cultural identity.', 'The caption says fathers must protect children and mothers. Protection here flows from a particular kind of authority rooted in traditional culture, performed by the body.'],
+    choices: [
+      { label: 'Now look at another version of that claim', dest: 'p2', tag: '→ Photo 2' }
+    ]
+  },
+  p2: {
+    photo: 'Photo 2',
+    stream: 'infra',
+    body: ['The participant stands relaxed, dressed in smart clothes, in front of a car that might signal material security in this context. There is a sense of respectability and composure; perhaps it means to say that security is something legible in how you present yourself to the world — an ability to take pride in your own sense of self.', 'Photos 1 and 2 both operate as protective: security flows from a figure who has the authority and means to provide it to others. But security can be understood differently.'],
+    choices: [
+      { label: 'As something produced collectively, through care', dest: 'p18', tag: '→ Photo 18' },
+      { label: 'As something that begins with the self and the capacity to act despite fear', dest: 'p4', tag: '→ Photo 4' }
+    ]
+  },
+  p4: {
+    photo: 'Photo 4',
+    stream: 'neutral',
+    body: ['This participant has made herself the subject. Across these images she is performing and in each one she is fully present, unguarded, joyful. The caption says security includes feeling secure in your own abilities — finding your inner Rock Star despite fears of what others may think.', 'Security here is not about protection from external threat. It is about the internal condition that makes action possible: the capacity to show up as yourself, in public, despite the risk. This is the most individual claim in the exhibition. It asks: can security begin here, with one person and their own sense of self? And if it can, is that enough?'],
+    choices: [
+      { label: 'Now look at what security looks like when it cannot begin with the individual alone', dest: 'p18', tag: '→ Photo 18' }
+    ]
+  },
+  p11: {
+    photo: 'Photo 11',
+    stream: 'practice',
+    body: ['Every repurposed ice cream tub has an apple placed on top of it. Someone took the time to add fruit to every single portion. This is a standard of care being insisted upon. The food being distributed here is a full meal with vegetables, delivered to people who are bedridden and cannot come to collect it.'],
+    choices: [
+      { label: 'Now look at how it travels', dest: 'p14', tag: '→ Photo 14' }
+    ]
+  },
+  p12: {
+    photo: 'Photo 12',
+    stream: 'practice',
+    body: ['Someone has laid a tablecloth in a concrete industrial space. There are soft drinks on the table. Children are playing in the background. This looks like an occasion, because someone decided to make it one.', 'The soup kitchen was a place where people sat together, ate together, and held space for each other. Crisis did not dissolve this community — it deepened it.'],
+    choices: [
+      { label: 'Now look at how that community reaches outward', dest: 'p14', tag: '→ Photo 14' }
+    ]
+  },
+  p14: {
+    photo: 'Photos 13 & 14',
+    stream: 'practice',
+    body: ['Look at the woman with her arm raised. This appears to be a candid moment of celebration in the middle of caring labour. Someone is saying: <em>look what we made!</em> The caption describes the same careful procedures as Photo 10, but the image is doing something the caption doesn\'t: it is insisting that this work was also joyful. That the people doing it took pride in it.', 'Road safety equipment has been repurposed to aid community deliveries — whatever is available has been made to work. Food cooked with care, packed with an apple on each portion, now carried on bikes through the streets of Langa to people who cannot leave their homes.'],
+    choices: [
+      { label: 'Now look at what this chain of care ultimately claims', dest: 'p18', tag: '→ Photo 18' }
+    ]
+  },
+  p16: {
+    photo: 'Photo 16',
+    stream: 'neutral',
+    body: ['These students are smiling defiantly. Their fists are raised. Behind them to the right, the fencing of an institutional space — a sports ground, a school perimeter. They are marching along its boundary.', 'The caption says education becomes security when young people are given safe spaces to learn and imagine a future beyond violence, fear, and limitation. Security here is forward-thinking: it is about what becomes possible, not just what is safe now. It requires an institution that functions. It requires a state that provides.'],
+    choices: [
+      { label: 'Now look at what a community provides for itself, without waiting', dest: 'p17', tag: '→ Photo 17' }
+    ]
+  },
+  p17: {
+    photo: 'Photo 17',
+    stream: 'neutral',
+    body: ['The dancer\'s leg is almost vertical. Around her, women of different ages are watching, singing, participating. This is happening on an ordinary street.', 'The caption says culture becomes protection, affirming identity, dignity, and community responsibility to safeguard young lives. Security here is intergenerational: it is carried in the body, transmitted through practice, and renewed each time it is performed in public.'],
+    choices: [
+      { label: 'Now look at the final photograph', dest: 'p15', tag: '→ Photo 15' }
+    ]
+  },
+  p15: {
+    photo: 'Photo 15',
+    stream: 'neutral',
+    body: ['Look at the composition of this photograph. The faces are not visible. The hands are the subject: waiting, giving, receiving. The open palm at the bottom of the image belongs to the person taking the photograph. As you look at this image, it is also yours.', 'This image sits at the centre of the exhibition. Every path through these photographs has been circling this one. The caption makes the claim that a warm meal is more than just nourishment — it is security, dignity, and proof that a community can care for its own.'],
+    choices: [
+      { label: 'Now look at what that future is already being built from', dest: 'p18', tag: '→ Photo 18' }
+    ]
+  },
+  p18: {
+    photo: 'Photo 18',
+    stream: 'neutral',
+    isEnd: true,
+    body: ['This is a young man mid-jump on a beach in Cape Town. Around him: children, teenagers, a dog, people of different races in ordinary beach clothes. He is wearing white trousers and traditional cloth. The caption refuses the categories that organise insecurity in this city.', '<em>Human origin, new tribe, new people. United in building peace and togetherness: this is common security.</em>', 'You have now read accounts of what security might be. Some of them sit comfortably alongside each other. Others are in direct tension.'],
+    choices: []
+  }
+};
+
+let history = [];
+let current = 'start';
+
+function streamTag(stream) {
+  if (stream === 'practice') return '<span class="stream-tag stream-practice">Practice stream</span>';
+  if (stream === 'infra') return '<span class="stream-tag stream-infra">Infrastructure stream</span>';
+  return '';
+}
+
+function buildBreadcrumb() {
+  if (history.length === 0) return '';
+  let html = '<nav class="breadcrumb" aria-label="Your path so far">';
+  html += '<span class="crumb" data-idx="-1">Start</span>';
+  history.forEach((id, i) => {
+    const n = nodes[id];
+    const label = n.photo || 'Start';
+    html += `<span class="crumb-sep" aria-hidden="true">›</span><span class="crumb" data-idx="${i}">${label}</span>`;
+  });
+  const cur = nodes[current];
+  if (cur && cur.photo) {
+    html += `<span class="crumb-sep" aria-hidden="true">›</span><span class="crumb current" aria-current="step">${cur.photo}</span>`;
+  }
+  html += '</nav>';
+  return html;
+}
+
+function progressBar() {
+  const total = 6;
+  const pct = Math.min(100, Math.round((history.length / total) * 100));
+  return `<div class="progress-bar" role="progressbar" aria-valuenow="${pct}" aria-valuemin="0" aria-valuemax="100"><div class="progress-fill" style="width:${pct}%"></div></div>`;
+}
+
+function renderBody(paras) {
+  return paras.map(p => `<p>${p}</p>`).join('');
+}
+
+function render() {
+  const node = nodes[current];
+  const app = document.getElementById('app');
+  let html = '';
+
+  if (node.type === 'start') {
+    html += `<div class="card">
+      <h2 class="start-title">Where do you want to begin?</h2>
+      <p class="start-sub">${node.body}</p>
+      <div class="choices">`;
+    node.choices.forEach(c => {
+      html += `<button class="choice-btn" data-dest="${c.dest}">
+        <span>${c.label}</span>
+        <span class="dest-tag">${c.tag}</span>
+      </button>`;
+    });
+    html += `</div></div>`;
+  } else {
+    html += buildBreadcrumb();
+    html += progressBar();
+    html += `<div class="card">`;
+    if (node.stream && node.stream !== 'neutral') html += streamTag(node.stream);
+    html += `<span class="photo-label">${node.photo}</span>`;
+    html += `<div class="card-body">${renderBody(node.body)}</div>`;
+    if (node.question) html += `<p class="question">${node.question}</p>`;
+    if (!node.isEnd) {
+      html += `<div class="choices">`;
+      node.choices.forEach(c => {
+        html += `<button class="choice-btn" data-dest="${c.dest}">
+          <span>${c.label}</span>
+          <span class="dest-tag">${c.tag}</span>
+        </button>`;
+      });
+      html += `</div>`;
+    } else {
+      html += `<div class="end-note">What did you think security meant when you walked in? What do you think now?</div>
+      <button class="restart-btn" data-dest="start">↩ Start again</button>`;
+    }
+    html += `</div>`;
+  }
+
+  app.innerHTML = html;
+
+  app.querySelectorAll('[data-dest]').forEach(el => {
+    el.addEventListener('click', () => {
+      const dest = el.getAttribute('data-dest');
+      if (dest === 'start') {
+        history = [];
+        current = 'start';
+      } else {
+        history.push(current);
+        current = dest;
+      }
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      render();
+    });
+  });
+
+  app.querySelectorAll('.crumb[data-idx]').forEach(crumb => {
+    crumb.addEventListener('click', () => {
+      const idx = parseInt(crumb.getAttribute('data-idx'));
+      if (idx === -1) {
+        history = [];
+        current = 'start';
+      } else {
+        current = history[idx];
+        history = history.slice(0, idx);
+      }
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      render();
+    });
+  });
+}
+
+render();
+</script>
+</body>
+</html>
